@@ -1,0 +1,9 @@
+{
+  "xiaozhi": "小智",
+  "setting": "设置",
+  "requestPermission": "录音需要麦克风权限，请同意权限请求。",
+  "requestPermissionDescription": "Recording requires microphone permission, please agree to the permission request.",
+  "reject": "拒绝",
+  "agree": "同意",
+  "holdToTalk": "按住说话"
+}

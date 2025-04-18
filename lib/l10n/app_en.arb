@@ -1,0 +1,9 @@
+{
+  "xiaozhi": "Xiaozhi",
+  "setting": "Setting",
+  "requestPermission": "Request Permission",
+  "requestPermissionDescription":"Recording requires microphone permission, please agree to the permission request.",
+  "reject": "Reject",
+  "agree": "Agree",
+  "holdToTalk": "Hold to talk"
+}

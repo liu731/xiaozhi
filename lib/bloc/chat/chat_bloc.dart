@@ -8,9 +8,10 @@ import 'package:opus_dart/opus_dart.dart';
 import 'package:opus_flutter/opus_flutter.dart' as opus_flutter;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
-import 'package:uuid/uuid.dart';
+import 'package:taudio/public/fs/flutter_sound.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:xiaozhi/model/message.dart';
 import 'package:xiaozhi/util/common_utils.dart';
 
 part 'chat_event.dart';
@@ -23,17 +24,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   AudioRecorder? _audioRecorder;
 
+  FlutterSoundPlayer? _audioPlayer;
+
   Stream<Uint8List>? _audioStream;
 
   StreamSubscription<Uint8List>? _audioSubscription;
 
-  String? sessionId;
+  String? _sessionId;
 
-  int? audioSampleRate;
+  int? _audioSampleRate;
 
-  int? audioChannels;
+  int? _audioChannels;
 
-  int? audioFrameDuration;
+  int? _audioFrameDuration;
 
   ChatBloc() : super(ChatInitialState()) {
     on<ChatEvent>((event, emit) async {
@@ -51,19 +54,52 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           );
 
           _streamSubscription = _channel!.stream.listen(
-            (message) {
-              // Handle incoming messages
-              print('Received message: $message');
-
-              //{"type": "hello", "version": 1, "transport": "websocket", "audio_params": {"format": "opus", "sample_rate": 16000, "channels": 1, "frame_duration": 60}, "session_id": "927320e6-7bde-464f-84c3-51930746f077"}
+            (data) async {
               try {
-                var json = jsonDecode(message);
-                print(json);
-                sessionId = json['session_id'];
-                audioSampleRate = json['audio_params']['sample_rate'];
-                audioChannels = json['audio_params']['channels'];
-                audioFrameDuration = json['audio_params']['frame_duration'];
-              } catch (e) {}
+                if (data is String) {
+                  final Message message = Message.fromJson(jsonDecode(data));
+                  if (null != message.sessionId) {
+                    _sessionId = message.sessionId;
+                  }
+                  if (null != message.audioParams) {
+                    _audioSampleRate = message.audioParams!.sampleRate;
+                    _audioChannels = message.audioParams!.channels;
+                    _audioFrameDuration = message.audioParams!.frameDuration;
+                  }
+
+                  if (message.type == Message.typeSpeechToText &&
+                      null != _audioRecorder) {
+                    await _audioRecorder!.stop();
+                    //TODO Add Text
+                  }
+                } else if (data is Uint8List) {
+                  if (false == _audioPlayer!.isOpen()) {
+                    await _audioPlayer!.openPlayer();
+                  }
+
+                  if (_audioPlayer!.isPlaying) {
+                    _audioPlayer!.uint8ListSink!.add(
+                      (await CommonUtils.opusToPcm(
+                        opusData: data,
+                        sampleRate: _audioSampleRate!,
+                        channels: _audioChannels!,
+                      ))!,
+                    );
+                  } else {
+                    await _audioPlayer!.startPlayerFromStream(
+                      codec: Codec.pcm16,
+                      interleaved: false,
+                      numChannels: _audioChannels!,
+                      sampleRate: _audioSampleRate!,
+                      bufferSize: 1024,
+                    );
+                  }
+                }
+              } catch (e, s) {
+                print('___Error');
+                print(e);
+                print(s);
+              }
             },
             onError: (error) {
               // Handle errors
@@ -76,10 +112,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           );
 
           _channel!.sink.add(
-            '{"type":"hello","version":1,"transport":"websocket","audio_params":{"format":"opus","sample_rate":${audioSampleRate ?? 16000},"channels":1,"frame_duration":${audioFrameDuration ?? 60}}',
+            jsonEncode(
+              Message(
+                type: Message.typeHello,
+                transport: Message.transportWebSocket,
+                audioParams: AudioParams(
+                  sampleRate: _audioSampleRate ?? AudioParams.sampleRate16000,
+                  channels: _audioChannels ?? AudioParams.channels1,
+                  frameDuration:
+                      _audioFrameDuration ?? AudioParams.frameDuration60,
+                  format: AudioParams.formatOpus,
+                ),
+              ).toJson(),
+            ),
           );
 
           _audioRecorder = AudioRecorder();
+
+          _audioPlayer = FlutterSoundPlayer();
 
           initOpus(await opus_flutter.load());
         } catch (e, s) {
@@ -98,22 +148,23 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         }
 
         _channel!.sink.add(
-          '{"session_id":"${sessionId!}","type":"listen","state":"start","mode":"auto"}',
+          jsonEncode(
+            Message(
+              type: Message.typeListen,
+              sessionId: _sessionId,
+              state: Message.stateStart,
+              mode: Message.modeAuto,
+            ).toJson(),
+          ),
         );
-
-        print('___FUCK');
-        print(sessionId);
-        print(audioSampleRate);
-        print(audioChannels);
-        print(audioFrameDuration);
 
         _audioStream = (await _audioRecorder!.startStream(
           RecordConfig(
             encoder: AudioEncoder.pcm16bits,
             echoCancel: true,
             noiseSuppress: true,
-            numChannels: audioChannels!,
-            sampleRate: audioSampleRate!,
+            numChannels: _audioChannels!,
+            sampleRate: _audioSampleRate!,
           ),
         ));
 
@@ -121,11 +172,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           if (_channel != null && data.isNotEmpty && data.length % 2 == 0) {
             Uint8List? opusData = await CommonUtils.pcmToOpus(
               pcmData: data,
-              sampleRate: audioSampleRate!,
-              frameDuration: audioFrameDuration!,
+              sampleRate: _audioSampleRate!,
+              frameDuration: _audioFrameDuration!,
             );
             if (null != opusData) {
-              print(opusData);
               _channel!.sink.add(opusData);
             }
           }

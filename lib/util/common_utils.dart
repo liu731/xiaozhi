@@ -6,6 +6,8 @@ import 'package:opus_dart/opus_dart.dart';
 class CommonUtils {
   static SimpleOpusEncoder? _simpleOpusEncoder;
 
+  static SimpleOpusDecoder? _simpleOpusDecoder;
+
   static String generateRandomMacAddress() {
     final random = Random();
     final bytes = List<int>.generate(6, (_) => random.nextInt(256));
@@ -56,6 +58,33 @@ class CommonUtils {
       }
 
       return encoded;
+    } catch (e, s) {
+      print('Error encoding PCM to Opus: $e $s');
+      return null;
+    }
+  }
+
+  static Future<Uint8List?> opusToPcm({
+    required Uint8List opusData,
+    required int sampleRate,
+    required int channels,
+  }) async {
+    try {
+      _simpleOpusDecoder ??= SimpleOpusDecoder(
+        sampleRate: sampleRate,
+        channels: channels,
+      );
+
+      final Int16List pcmData = _simpleOpusDecoder!.decode(input: opusData);
+
+      final Uint8List pcmBytes = Uint8List(pcmData.length * 2);
+      ByteData bytes = ByteData.view(pcmBytes.buffer);
+
+      for (int i = 0; i < pcmData.length; i++) {
+        bytes.setInt16(i * 2, pcmData[i], Endian.little);
+      }
+
+      return pcmBytes;
     } catch (e, s) {
       print('Error encoding PCM to Opus: $e $s');
       return null;

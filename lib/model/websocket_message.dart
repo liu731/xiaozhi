@@ -41,7 +41,7 @@ class AudioParams {
   }
 }
 
-class Message {
+class WebsocketMessage {
   static final String typeHello = 'hello';
 
   static final String typeSpeechToText = 'stt';
@@ -88,7 +88,7 @@ class Message {
 
   final String? mode;
 
-  Message({
+  WebsocketMessage({
     required this.type,
     this.transport,
     this.version,
@@ -132,8 +132,8 @@ class Message {
     };
   }
 
-  factory Message.fromJson(Map<String, dynamic> json) {
-    return Message(
+  factory WebsocketMessage.fromJson(Map<String, dynamic> json) {
+    return WebsocketMessage(
       type: json['type'],
       transport: json['transport'],
       version: json['version'],

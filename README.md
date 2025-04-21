@@ -1,16 +1,15 @@
-# xiaozhi
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Xiaozhi/小智 Flutter客户端
+***
+📋功能进度
+<br/>
+⚠️按键通话(实现中)
+*** 
+💾参考项目
+<br/>
+[78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32)
+<br/>
+[xinnan-tech/xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server)
+<br/>
+[TOM88812/xiaozhi-android-client](https://github.com/TOM88812/xiaozhi-android-client)
+***
+### བཀྲ་ཤིས་བདེ་ལེགས་ 扎西德勒

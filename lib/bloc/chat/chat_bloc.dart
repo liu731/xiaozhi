@@ -11,7 +11,7 @@ import 'package:record/record.dart';
 import 'package:taudio/public/fs/flutter_sound.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:xiaozhi/model/message.dart';
+import 'package:xiaozhi/model/websocket_message.dart';
 import 'package:xiaozhi/util/common_utils.dart';
 
 part 'chat_event.dart';
@@ -57,7 +57,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             (data) async {
               try {
                 if (data is String) {
-                  final Message message = Message.fromJson(jsonDecode(data));
+                  final WebsocketMessage message = WebsocketMessage.fromJson(jsonDecode(data));
                   if (null != message.sessionId) {
                     _sessionId = message.sessionId;
                   }
@@ -67,7 +67,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     _audioFrameDuration = message.audioParams!.frameDuration;
                   }
 
-                  if (message.type == Message.typeSpeechToText &&
+                  if (message.type == WebsocketMessage.typeSpeechToText &&
                       null != _audioRecorder) {
                     await _audioRecorder!.stop();
                     //TODO Add Text
@@ -113,9 +113,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
           _channel!.sink.add(
             jsonEncode(
-              Message(
-                type: Message.typeHello,
-                transport: Message.transportWebSocket,
+              WebsocketMessage(
+                type: WebsocketMessage.typeHello,
+                transport: WebsocketMessage.transportWebSocket,
                 audioParams: AudioParams(
                   sampleRate: _audioSampleRate ?? AudioParams.sampleRate16000,
                   channels: _audioChannels ?? AudioParams.channels1,
@@ -149,11 +149,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
         _channel!.sink.add(
           jsonEncode(
-            Message(
-              type: Message.typeListen,
+            WebsocketMessage(
+              type: WebsocketMessage.typeListen,
               sessionId: _sessionId,
-              state: Message.stateStart,
-              mode: Message.modeAuto,
+              state: WebsocketMessage.stateStart,
+              mode: WebsocketMessage.modeAuto,
             ).toJson(),
           ),
         );

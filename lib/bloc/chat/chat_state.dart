@@ -1,8 +1,16 @@
 part of 'chat_bloc.dart';
 
 @immutable
-sealed class ChatState {}
+sealed class ChatState {
+  final List<StorageMessage> messageList;
 
-final class ChatInitialState extends ChatState {}
+  const ChatState({this.messageList = const []});
+}
 
-final class ChatNoMicrophonePermissionState extends ChatState {}
+final class ChatInitialState extends ChatState {
+  const ChatInitialState({super.messageList});
+}
+
+final class ChatNoMicrophonePermissionState extends ChatState {
+  const ChatNoMicrophonePermissionState({super.messageList});
+}

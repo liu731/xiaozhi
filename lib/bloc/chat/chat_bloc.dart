@@ -9,10 +9,13 @@ import 'package:opus_flutter/opus_flutter.dart' as opus_flutter;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:taudio/public/fs/flutter_sound.dart';
+import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:xiaozhi/model/storage_message.dart';
 import 'package:xiaozhi/model/websocket_message.dart';
 import 'package:xiaozhi/util/common_utils.dart';
+import 'package:xiaozhi/util/storage_util.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
@@ -57,7 +60,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             (data) async {
               try {
                 if (data is String) {
-                  final WebsocketMessage message = WebsocketMessage.fromJson(jsonDecode(data));
+                  print(data);
+
+                  final WebsocketMessage message = WebsocketMessage.fromJson(
+                    jsonDecode(data),
+                  );
                   if (null != message.sessionId) {
                     _sessionId = message.sessionId;
                   }
@@ -70,7 +77,29 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                   if (message.type == WebsocketMessage.typeSpeechToText &&
                       null != _audioRecorder) {
                     await _audioRecorder!.stop();
-                    //TODO Add Text
+
+                    if (null != message.text) {
+                      await StorageUtil().insertMessage(
+                        StorageMessage(
+                          id: Uuid().v4(),
+                          text: message.text!,
+                          sendByMe: true,
+                          createdAt: DateTime.now(),
+                        ),
+                      );
+                    }
+                  } else if (message.type ==
+                          WebsocketMessage.typeTextToSpeech &&
+                      message.state == WebsocketMessage.stateSentenceEnd &&
+                      null != message.text) {
+                    await StorageUtil().insertMessage(
+                      StorageMessage(
+                        id: Uuid().v4(),
+                        text: message.text!,
+                        sendByMe: false,
+                        createdAt: DateTime.now(),
+                      ),
+                    );
                   }
                 } else if (data is Uint8List) {
                   if (false == _audioPlayer!.isOpen()) {
@@ -132,6 +161,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           _audioPlayer = FlutterSoundPlayer();
 
           initOpus(await opus_flutter.load());
+
+          List<StorageMessage> messageList = await StorageUtil()
+              .getPaginatedMessages(limit: 20, offset: 0);
+
+          emit(ChatInitialState(messageList: messageList));
         } catch (e, s) {
           print(e);
           print(s);

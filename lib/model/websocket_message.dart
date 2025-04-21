@@ -62,6 +62,8 @@ class WebsocketMessage {
 
   static final String stateSentenceStart = 'sentence_start';
 
+  static final String stateSentenceEnd = 'sentence_end';
+
   static final String emotionHappy = 'happy';
 
   static final String modeAuto = 'auto';

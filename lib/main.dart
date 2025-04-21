@@ -6,25 +6,33 @@ import 'package:xiaozhi/bloc/chat/chat_bloc.dart';
 import 'package:xiaozhi/bloc/ota/ota_bloc.dart';
 import 'package:xiaozhi/l10n/generated/app_localizations.dart';
 import 'package:xiaozhi/page/chat_page.dart';
+import 'package:xiaozhi/util/storage_util.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
       systemStatusBarContrastEnforced: true,
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarDividerColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
-      statusBarIconBrightness: Brightness.light));
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge,
-      overlays: [SystemUiOverlay.top]);
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+    overlays: [SystemUiOverlay.top],
+  );
+
+  await StorageUtil().init();
 
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => ChatBloc()..add(ChatInitialEvent())),
-        BlocProvider(create: (context) => OtaBloc()..add(OtaInitialEvent()))
+        BlocProvider(create: (context) => OtaBloc()..add(OtaInitialEvent())),
       ],
       child: MaterialApp(
         theme: ThemeData(

@@ -18,7 +18,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final ChatBloc chatBloc = BlocProvider.of<ChatBloc>(context);
 
-    return BlocListener(
+    return BlocConsumer(
       bloc: chatBloc,
       listener: (context, ChatState chatState) {
         if (chatState is ChatNoMicrophonePermissionState) {
@@ -71,48 +71,57 @@ class _ChatPageState extends State<ChatPage> {
           );
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.xiaozhi),
-          leading: Row(
+      builder: (context, ChatState chatState) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context)!.xiaozhi),
+            leading: Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => SettingPage()),
+                    );
+                  },
+                  icon: Icon(Icons.menu_rounded),
+                ),
+              ],
+            ),
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => SettingPage()),
-                  );
-                },
-                icon: Icon(Icons.menu_rounded),
+              Expanded(
+                child: ListView(
+                  children:
+                      chatState.messageList.reversed
+                          .map((e) => Container(child: Text(e.text)))
+                          .toList(),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(
+                  XConst.spacer,
+                ).copyWith(bottom: 12 + MediaQuery.of(context).padding.bottom),
+                child: FilledButton(
+                  onPressed: () {
+                    chatBloc.add(ChatStartListenEvent());
+                  },
+                  onLongPress: () {},
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.mic_rounded),
+                      SizedBox(width: XConst.spacer),
+                      Text(AppLocalizations.of(context)!.holdToTalk),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Spacer(),
-            Padding(
-              padding: EdgeInsets.all(
-                XConst.spacer,
-              ).copyWith(bottom: 12 + MediaQuery.of(context).padding.bottom),
-              child: FilledButton(
-                onPressed: () {
-                  chatBloc.add(ChatStartListenEvent());
-                },
-                onLongPress: () {},
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.mic_rounded),
-                    SizedBox(width: XConst.spacer),
-                    Text(AppLocalizations.of(context)!.holdToTalk),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

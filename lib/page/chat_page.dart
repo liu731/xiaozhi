@@ -105,7 +105,7 @@ class _ChatPageState extends State<ChatPage> {
                   children: [
                     Icon(Icons.mic_rounded),
                     SizedBox(width: XConst.spacer),
-                    Text('Hold to talk'),
+                    Text(AppLocalizations.of(context)!.holdToTalk),
                   ],
                 ),
               ),

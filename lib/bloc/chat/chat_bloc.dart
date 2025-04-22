@@ -41,6 +41,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   int? _audioFrameDuration;
 
+  final int _paginatedLimit = 20;
+
+  int _paginatedOffset = 0;
+
   ChatBloc() : super(ChatInitialState()) {
     on<ChatEvent>((event, emit) async {
       if (event is ChatInitialEvent) {
@@ -79,12 +83,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     await _audioRecorder!.stop();
 
                     if (null != message.text) {
-                      await StorageUtil().insertMessage(
-                        StorageMessage(
-                          id: Uuid().v4(),
-                          text: message.text!,
-                          sendByMe: true,
-                          createdAt: DateTime.now(),
+                      add(
+                        ChatOnMessageEvent(
+                          message: StorageMessage(
+                            id: Uuid().v4(),
+                            text: message.text!,
+                            sendByMe: true,
+                            createdAt: DateTime.now(),
+                          ),
                         ),
                       );
                     }
@@ -92,12 +98,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                           WebsocketMessage.typeTextToSpeech &&
                       message.state == WebsocketMessage.stateSentenceEnd &&
                       null != message.text) {
-                    await StorageUtil().insertMessage(
-                      StorageMessage(
-                        id: Uuid().v4(),
-                        text: message.text!,
-                        sendByMe: false,
-                        createdAt: DateTime.now(),
+                    add(
+                      ChatOnMessageEvent(
+                        message: StorageMessage(
+                          id: Uuid().v4(),
+                          text: message.text!,
+                          sendByMe: false,
+                          createdAt: DateTime.now(),
+                        ),
                       ),
                     );
                   }
@@ -163,7 +171,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           initOpus(await opus_flutter.load());
 
           List<StorageMessage> messageList = await StorageUtil()
-              .getPaginatedMessages(limit: 20, offset: 0);
+              .getPaginatedMessages(
+                limit: _paginatedLimit,
+                offset: _paginatedOffset,
+              );
 
           emit(ChatInitialState(messageList: messageList));
         } catch (e, s) {
@@ -214,6 +225,25 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             }
           }
         });
+      }
+
+      if (event is ChatOnMessageEvent) {
+        await StorageUtil().insertMessage(event.message);
+        emit(
+          ChatInitialState(messageList: [event.message, ...state.messageList]),
+        );
+      }
+
+      if (event is ChatLoadMoreEvent) {
+        _paginatedOffset += _paginatedLimit;
+        List<StorageMessage> messageList = await StorageUtil()
+            .getPaginatedMessages(limit: 20, offset: _paginatedOffset);
+        emit(
+          ChatInitialState(
+            messageList: [...state.messageList, ...messageList],
+            hasMore: messageList.length == _paginatedLimit,
+          ),
+        );
       }
     });
   }

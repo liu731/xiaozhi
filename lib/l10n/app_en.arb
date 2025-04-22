@@ -2,8 +2,11 @@
   "xiaozhi": "Xiaozhi",
   "setting": "Setting",
   "requestPermission": "Request Permission",
-  "requestPermissionDescription":"Recording requires microphone permission, please agree to the permission request.",
+  "requestPermissionDescription": "Recording requires microphone permission, please agree to the permission request.",
   "reject": "Reject",
   "agree": "Agree",
-  "holdToTalk": "Hold to talk"
+  "holdToTalk": "Hold to talk",
+  "noMoreData": "No more data!",
+  "loading": "Loading...",
+  "ok": "OK"
 }

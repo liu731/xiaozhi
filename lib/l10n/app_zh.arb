@@ -5,5 +5,8 @@
   "requestPermissionDescription": "录音需要麦克风权限，请同意权限请求。",
   "reject": "拒绝",
   "agree": "同意",
-  "holdToTalk": "按住说话"
+  "holdToTalk": "按住说话",
+  "noMoreData": "没有更多数据了！",
+  "loading": "加载中...",
+  "ok": "好的"
 }

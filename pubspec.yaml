@@ -23,6 +23,7 @@ dependencies:
   shared_preferences: ^2.5.3
   taudio: ^10.3.0
   sqflite: ^2.4.2
+  pull_to_refresh_flutter3: ^2.0.2
 
 dev_dependencies:
   flutter_test:

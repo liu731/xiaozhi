@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import 'package:xiaozhi/bloc/chat/chat_bloc.dart';
 import 'package:xiaozhi/common/x_const.dart';
 import 'package:xiaozhi/l10n/generated/app_localizations.dart';
@@ -14,6 +15,20 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  late RefreshController _refreshController;
+
+  @override
+  void initState() {
+    _refreshController = RefreshController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _refreshController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final MediaQueryData mediaQuery = MediaQuery.of(context);
@@ -72,6 +87,14 @@ class _ChatPageState extends State<ChatPage> {
             },
           );
         }
+
+        if (chatState is ChatInitialState) {
+          if (chatState.hasMore) {
+            _refreshController.loadComplete();
+          } else {
+            _refreshController.loadNoData();
+          }
+        }
       },
       builder: (context, ChatState chatState) {
         return Scaffold(
@@ -94,57 +117,89 @@ class _ChatPageState extends State<ChatPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: ListView(
-                  padding: EdgeInsets.all(XConst.spacer),
-                  children:
-                      chatState.messageList.reversed
-                          .map(
-                            (e) => Row(
-                              mainAxisAlignment:
-                                  e.sendByMe
-                                      ? MainAxisAlignment.end
-                                      : MainAxisAlignment.start,
-                              children: [
-                                Container(
-                                  constraints: BoxConstraints(
-                                    maxWidth: mediaQuery.size.width * 0.75,
-                                  ),
-                                  margin: EdgeInsets.only(top: XConst.spacer),
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: XConst.spacer * 0.8,
-                                    horizontal: XConst.spacer,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      XConst.spacer * 1.5,
+                child: SmartRefresher(
+                  enablePullDown: false,
+                  enablePullUp: true,
+                  controller: _refreshController,
+                  footer: CustomFooter(
+                    builder: (BuildContext context, LoadStatus? mode) {
+                      String text;
+                      switch (mode) {
+                        case LoadStatus.loading:
+                          text = AppLocalizations.of(context)!.loading;
+                          break;
+                        default:
+                          text = AppLocalizations.of(context)!.noMoreData;
+                      }
+                      return Center(
+                        child: Text(
+                          text,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer
+                                .withValues(alpha: 0.5),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  onLoading: () {
+                    chatBloc.add(ChatLoadMoreEvent());
+                  },
+                  child: ListView(
+                    reverse: true,
+                    padding: EdgeInsets.all(XConst.spacer),
+                    children:
+                        chatState.messageList
+                            .map(
+                              (e) => Row(
+                                mainAxisAlignment:
+                                    e.sendByMe
+                                        ? MainAxisAlignment.end
+                                        : MainAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    constraints: BoxConstraints(
+                                      maxWidth: mediaQuery.size.width * 0.75,
                                     ),
-                                    color:
-                                        e.sendByMe
-                                            ? Theme.of(
-                                              context,
-                                            ).colorScheme.primaryContainer
-                                            : Theme.of(
-                                              context,
-                                            ).colorScheme.tertiaryContainer,
-                                  ),
-                                  child: Text(
-                                    e.text,
-                                    style: TextStyle(
+                                    margin: EdgeInsets.only(top: XConst.spacer),
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: XConst.spacer * 0.8,
+                                      horizontal: XConst.spacer,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        XConst.spacer * 1.5,
+                                      ),
                                       color:
                                           e.sendByMe
                                               ? Theme.of(
                                                 context,
-                                              ).colorScheme.onPrimaryContainer
+                                              ).colorScheme.primaryContainer
                                               : Theme.of(
                                                 context,
-                                              ).colorScheme.onTertiaryContainer,
+                                              ).colorScheme.tertiaryContainer,
+                                    ),
+                                    child: Text(
+                                      e.text,
+                                      style: TextStyle(
+                                        color:
+                                            e.sendByMe
+                                                ? Theme.of(
+                                                  context,
+                                                ).colorScheme.onPrimaryContainer
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onTertiaryContainer,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          )
-                          .toList(),
+                                ],
+                              ),
+                            )
+                            .toList(),
+                  ),
                 ),
               ),
               Padding(

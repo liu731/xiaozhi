@@ -10,3 +10,11 @@ class ChatStartListenEvent extends ChatEvent {
 
   ChatStartListenEvent({this.isRequestMicrophonePermission = false});
 }
+
+class ChatOnMessageEvent extends ChatEvent {
+  final StorageMessage message;
+
+  ChatOnMessageEvent({required this.message});
+}
+
+class ChatLoadMoreEvent extends ChatEvent {}

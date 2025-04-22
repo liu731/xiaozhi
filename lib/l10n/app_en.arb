@@ -8,5 +8,9 @@
   "holdToTalk": "Hold to talk",
   "noMoreData": "No more data!",
   "loading": "Loading...",
-  "ok": "OK"
+  "ok": "OK",
+  "saySomething": "Say something",
+  "voiceRecognition": "Voice Recognition",
+  "swipeUpToCancel": "Swipe up to cancel",
+  "swipeInToResume": "Swipe in to resume"
 }

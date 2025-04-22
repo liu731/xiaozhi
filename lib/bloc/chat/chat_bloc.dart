@@ -45,6 +45,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   int _paginatedOffset = 0;
 
+  @override
+  Future<void> close() {
+    if (null != _streamSubscription) {
+      _streamSubscription!.cancel();
+      _streamSubscription = null;
+    }
+    if (null != _audioSubscription) {
+      _audioSubscription!.cancel();
+      _audioSubscription = null;
+    }
+    return super.close();
+  }
+
   ChatBloc() : super(ChatInitialState()) {
     on<ChatEvent>((event, emit) async {
       if (event is ChatInitialEvent) {
@@ -64,8 +77,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             (data) async {
               try {
                 if (data is String) {
-                  print(data);
-
                   final WebsocketMessage message = WebsocketMessage.fromJson(
                     jsonDecode(data),
                   );
@@ -96,7 +107,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     }
                   } else if (message.type ==
                           WebsocketMessage.typeTextToSpeech &&
-                      message.state == WebsocketMessage.stateSentenceEnd &&
+                      message.state == WebsocketMessage.stateSentenceStart &&
                       null != message.text) {
                     add(
                       ChatOnMessageEvent(
@@ -244,6 +255,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             hasMore: messageList.length == _paginatedLimit,
           ),
         );
+      }
+
+      if (event is ChatStopListenEvent) {
+        if (null != _audioRecorder && (await _audioRecorder!.isRecording())) {
+          await _audioRecorder!.stop();
+        }
       }
     });
   }

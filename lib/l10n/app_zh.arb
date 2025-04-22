@@ -8,5 +8,9 @@
   "holdToTalk": "按住说话",
   "noMoreData": "没有更多数据了！",
   "loading": "加载中...",
-  "ok": "好的"
+  "ok": "好的",
+  "saySomething": "说点什么吧",
+  "voiceRecognition": "语音识别",
+  "swipeUpToCancel": "上滑取消",
+  "swipeInToResume": "上滑恢复"
 }

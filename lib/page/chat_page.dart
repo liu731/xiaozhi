@@ -4,6 +4,7 @@ import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 import 'package:xiaozhi/bloc/chat/chat_bloc.dart';
 import 'package:xiaozhi/common/x_const.dart';
 import 'package:xiaozhi/l10n/generated/app_localizations.dart';
+import 'package:xiaozhi/widget/hold_to_talk_widget.dart';
 
 import 'setting_page.dart';
 
@@ -17,6 +18,13 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   late RefreshController _refreshController;
 
+  final GlobalKey<HoldToTalkWidgetState> holdToTalkKey =
+      GlobalKey<HoldToTalkWidgetState>();
+
+  bool _isPressing = false;
+
+  late ChatBloc chatBloc;
+
   @override
   void initState() {
     _refreshController = RefreshController();
@@ -29,16 +37,28 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
+  clearUp() async {
+    chatBloc.add(ChatStopListenEvent());
+    holdToTalkKey.currentState!.setSpeaking(false);
+    if (_isPressing && mounted) {
+      setState(() {
+        _isPressing = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final MediaQueryData mediaQuery = MediaQuery.of(context);
 
-    final ChatBloc chatBloc = BlocProvider.of<ChatBloc>(context);
+    chatBloc = BlocProvider.of<ChatBloc>(context);
 
     return BlocConsumer(
       bloc: chatBloc,
       listener: (context, ChatState chatState) {
         if (chatState is ChatNoMicrophonePermissionState) {
+          clearUp();
+
           showDialog(
             context: context,
             builder: (context) {
@@ -94,6 +114,10 @@ class _ChatPageState extends State<ChatPage> {
           } else {
             _refreshController.loadNoData();
           }
+
+          if (chatState.messageList.first.sendByMe) {
+            clearUp();
+          }
         }
       },
       builder: (context, ChatState chatState) {
@@ -113,114 +137,164 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
           ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          body: Stack(
             children: [
-              Expanded(
-                child: SmartRefresher(
-                  enablePullDown: false,
-                  enablePullUp: true,
-                  controller: _refreshController,
-                  footer: CustomFooter(
-                    builder: (BuildContext context, LoadStatus? mode) {
-                      String text;
-                      switch (mode) {
-                        case LoadStatus.loading:
-                          text = AppLocalizations.of(context)!.loading;
-                          break;
-                        default:
-                          text = AppLocalizations.of(context)!.noMoreData;
-                      }
-                      return Center(
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer
-                                .withValues(alpha: 0.5),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  onLoading: () {
-                    chatBloc.add(ChatLoadMoreEvent());
-                  },
-                  child: ListView(
-                    reverse: true,
-                    padding: EdgeInsets.all(XConst.spacer),
-                    children:
-                        chatState.messageList
-                            .map(
-                              (e) => Row(
-                                mainAxisAlignment:
-                                    e.sendByMe
-                                        ? MainAxisAlignment.end
-                                        : MainAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    constraints: BoxConstraints(
-                                      maxWidth: mediaQuery.size.width * 0.75,
-                                    ),
-                                    margin: EdgeInsets.only(top: XConst.spacer),
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: XConst.spacer * 0.8,
-                                      horizontal: XConst.spacer,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(
-                                        XConst.spacer * 1.5,
-                                      ),
-                                      color:
-                                          e.sendByMe
-                                              ? Theme.of(
-                                                context,
-                                              ).colorScheme.primaryContainer
-                                              : Theme.of(
-                                                context,
-                                              ).colorScheme.tertiaryContainer,
-                                    ),
-                                    child: Text(
-                                      e.text,
-                                      style: TextStyle(
-                                        color:
-                                            e.sendByMe
-                                                ? Theme.of(
-                                                  context,
-                                                ).colorScheme.onPrimaryContainer
-                                                : Theme.of(context)
-                                                    .colorScheme
-                                                    .onTertiaryContainer,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: SmartRefresher(
+                      enablePullDown: false,
+                      enablePullUp: true,
+                      controller: _refreshController,
+                      footer: CustomFooter(
+                        builder: (BuildContext context, LoadStatus? mode) {
+                          String text;
+                          switch (mode) {
+                            case LoadStatus.loading:
+                              text = AppLocalizations.of(context)!.loading;
+                              break;
+                            default:
+                              text = AppLocalizations.of(context)!.noMoreData;
+                          }
+                          return Center(
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
+                                    .withValues(alpha: 0.5),
                               ),
-                            )
-                            .toList(),
+                            ),
+                          );
+                        },
+                      ),
+                      onLoading: () {
+                        chatBloc.add(ChatLoadMoreEvent());
+                      },
+                      child: ListView(
+                        reverse: true,
+                        padding: EdgeInsets.all(XConst.spacer),
+                        children:
+                            chatState.messageList
+                                .map(
+                                  (e) => Row(
+                                    mainAxisAlignment:
+                                        e.sendByMe
+                                            ? MainAxisAlignment.end
+                                            : MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        constraints: BoxConstraints(
+                                          maxWidth:
+                                              mediaQuery.size.width * 0.75,
+                                        ),
+                                        margin: EdgeInsets.only(
+                                          top: XConst.spacer,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: XConst.spacer * 0.8,
+                                          horizontal: XConst.spacer,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            XConst.spacer * 1.5,
+                                          ),
+                                          color:
+                                              e.sendByMe
+                                                  ? Theme.of(
+                                                    context,
+                                                  ).colorScheme.primaryContainer
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .tertiaryContainer,
+                                        ),
+                                        child: Text(
+                                          e.text,
+                                          style: TextStyle(
+                                            color:
+                                                e.sendByMe
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimaryContainer
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .onTertiaryContainer,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                .toList(),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(
-                  XConst.spacer,
-                ).copyWith(bottom: 12 + MediaQuery.of(context).padding.bottom),
-                child: FilledButton(
-                  onPressed: () {
-                    chatBloc.add(ChatStartListenEvent());
-                  },
-                  onLongPress: () {},
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.mic_rounded),
-                      SizedBox(width: XConst.spacer),
-                      Text(AppLocalizations.of(context)!.holdToTalk),
-                    ],
+                  Padding(
+                    padding: EdgeInsets.all(XConst.spacer).copyWith(
+                      bottom: 12 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: GestureDetector(
+                      onTapDown: (_) {
+                        holdToTalkKey.currentState!.setCancelTapUp(false);
+                        if (!_isPressing) {
+                          setState(() {
+                            _isPressing = true;
+                          });
+                        }
+                      },
+                      onTapUp: (_) {
+                        holdToTalkKey.currentState!.setCancelTapUp(false);
+                        clearUp();
+                      },
+                      onTapCancel: () {
+                        holdToTalkKey.currentState!.setCancelTapUp(false);
+                        clearUp();
+                      },
+                      onLongPressStart: (_) async {
+                        holdToTalkKey.currentState!.setSpeaking(true);
+                        if (!_isPressing) {
+                          setState(() {
+                            _isPressing = true;
+                          });
+                        }
+                        chatBloc.add(ChatStartListenEvent());
+                      },
+                      onLongPressEnd: (detail) async {
+                        clearUp();
+                      },
+                      onLongPressCancel: () {
+                        holdToTalkKey.currentState!.setCancelTapUp(false);
+                        clearUp();
+                      },
+                      onLongPressMoveUpdate: (detail) {
+                        if ((mediaQuery.size.height -
+                                detail.globalPosition.dy) <
+                            (XConst.holdToTalkResponseAreaHeight +
+                                mediaQuery.padding.bottom)) {
+                          holdToTalkKey.currentState!.setCancelTapUp(false);
+                        } else {
+                          holdToTalkKey.currentState!.setCancelTapUp(true);
+                        }
+                        if (mounted) setState(() {});
+                      },
+                      child: FilledButton(
+                        onPressed: () {},
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.mic_rounded),
+                            SizedBox(width: XConst.spacer),
+                            Text(AppLocalizations.of(context)!.holdToTalk),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
+              HoldToTalkWidget(key: holdToTalkKey),
             ],
           ),
         );

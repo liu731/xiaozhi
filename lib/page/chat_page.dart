@@ -16,6 +16,8 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
+    final MediaQueryData mediaQuery = MediaQuery.of(context);
+
     final ChatBloc chatBloc = BlocProvider.of<ChatBloc>(context);
 
     return BlocConsumer(
@@ -93,9 +95,55 @@ class _ChatPageState extends State<ChatPage> {
             children: [
               Expanded(
                 child: ListView(
+                  padding: EdgeInsets.all(XConst.spacer),
                   children:
                       chatState.messageList.reversed
-                          .map((e) => Container(child: Text(e.text)))
+                          .map(
+                            (e) => Row(
+                              mainAxisAlignment:
+                                  e.sendByMe
+                                      ? MainAxisAlignment.end
+                                      : MainAxisAlignment.start,
+                              children: [
+                                Container(
+                                  constraints: BoxConstraints(
+                                    maxWidth: mediaQuery.size.width * 0.75,
+                                  ),
+                                  margin: EdgeInsets.only(top: XConst.spacer),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: XConst.spacer * 0.8,
+                                    horizontal: XConst.spacer,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(
+                                      XConst.spacer * 1.5,
+                                    ),
+                                    color:
+                                        e.sendByMe
+                                            ? Theme.of(
+                                              context,
+                                            ).colorScheme.primaryContainer
+                                            : Theme.of(
+                                              context,
+                                            ).colorScheme.tertiaryContainer,
+                                  ),
+                                  child: Text(
+                                    e.text,
+                                    style: TextStyle(
+                                      color:
+                                          e.sendByMe
+                                              ? Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimaryContainer
+                                              : Theme.of(
+                                                context,
+                                              ).colorScheme.onTertiaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
                           .toList(),
                 ),
               ),

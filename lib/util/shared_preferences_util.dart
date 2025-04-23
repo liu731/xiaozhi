@@ -1,5 +1,4 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 import 'package:xiaozhi/common/x_const.dart';
 import 'package:xiaozhi/util/common_utils.dart';
 
@@ -19,8 +18,6 @@ class SharedPreferencesUtil {
 
   final String _keyMacAddress = 'MAC_ADDRESS';
 
-  final String _keyClientId = 'CLIENT_ID';
-
   Future<void> init() async {
     String? otaUrl = await getOtaUrl();
     if (null == otaUrl) {
@@ -35,11 +32,6 @@ class SharedPreferencesUtil {
     String? macAddress = await getMacAddress();
     if (null == macAddress) {
       await setMacAddress(CommonUtils.generateUnicastMacAddress());
-    }
-
-    String? clientId = await getClientId();
-    if (null == clientId) {
-      await setClientId(Uuid().v4());
     }
   }
 
@@ -69,17 +61,6 @@ class SharedPreferencesUtil {
   Future<bool> setMacAddress(String value) async {
     return (await SharedPreferences.getInstance()).setString(
       _keyMacAddress,
-      value,
-    );
-  }
-
-  Future<String?> getClientId() async {
-    return (await SharedPreferences.getInstance()).getString(_keyClientId);
-  }
-
-  Future<bool> setClientId(String value) async {
-    return (await SharedPreferences.getInstance()).setString(
-      _keyClientId,
       value,
     );
   }

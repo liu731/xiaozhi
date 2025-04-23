@@ -13,5 +13,7 @@
   "voiceRecognition": "Voice Recognition",
   "swipeUpToCancel": "Swipe up to cancel",
   "swipeInToResume": "Swipe in to resume",
-  "call": "Call"
+  "call": "Call",
+  "deviceActivation": "Device Activation",
+  "deviceActivationDescription": "Please use the activation code to activate the device. If you are self-deploying or do not need verification, please ignore this request."
 }

@@ -1,4 +1,6 @@
 class XConst {
+  static final String name = "liu731/xiaozhi";
+
   static final double spacer = 12;
 
   static final double holdToTalkResponseAreaHeight = 100;

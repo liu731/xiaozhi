@@ -168,7 +168,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             headers: {
               "Protocol-Version": "1",
               "Device-Id": await SharedPreferencesUtil().getMacAddress(),
-              "Client-Id": await SharedPreferencesUtil().getClientId(),
             },
           );
 

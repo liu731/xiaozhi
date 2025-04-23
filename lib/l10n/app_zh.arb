@@ -13,5 +13,7 @@
   "voiceRecognition": "语音识别",
   "swipeUpToCancel": "上滑取消",
   "swipeInToResume": "上滑恢复",
-  "call": "通话"
+  "call": "通话",
+  "deviceActivation": "设备激活",
+  "deviceActivationDescription": "请使用激活码激活设备，自部署或无需验证请忽略本请求。"
 }

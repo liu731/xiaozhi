@@ -33,8 +33,11 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
+        BlocProvider(
+          create: (context) => OtaBloc()..add(OtaInitialEvent()),
+          lazy: false,
+        ),
         BlocProvider(create: (context) => ChatBloc()..add(ChatInitialEvent())),
-        BlocProvider(create: (context) => OtaBloc()..add(OtaInitialEvent())),
       ],
       child: MaterialApp(
         theme: ThemeData(

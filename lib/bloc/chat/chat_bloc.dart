@@ -208,12 +208,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
 
       if (event is ChatStartListenEvent) {
-        if (false ==
-            (event.isRequestMicrophonePermission
-                ? (await Permission.microphone.request().isGranted)
-                : (await Permission.microphone.isGranted))) {
-          emit(ChatNoMicrophonePermissionState());
-          return;
+        if (!await Permission.microphone.isGranted) {
+          if (!event.isRequestMicrophonePermission ||
+              !await Permission.microphone.request().isGranted) {
+            emit(ChatNoMicrophonePermissionState());
+          }
+          if (!_isOnCall) {
+            return;
+          }
         }
 
         if (null == _websocketStreamSubscription) {

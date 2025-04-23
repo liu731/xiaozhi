@@ -21,17 +21,17 @@ part 'chat_event.dart';
 part 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  WebSocketChannel? _channel;
+  WebSocketChannel? _websocketChannel;
 
-  StreamSubscription? _streamSubscription;
+  StreamSubscription? _websocketStreamSubscription;
 
   AudioRecorder? _audioRecorder;
 
   FlutterSoundPlayer? _audioPlayer;
 
-  Stream<Uint8List>? _audioStream;
+  Stream<Uint8List>? _audioRecorderStream;
 
-  StreamSubscription<Uint8List>? _audioSubscription;
+  StreamSubscription<Uint8List>? _audioRecorderSubscription;
 
   String? _sessionId;
 
@@ -41,30 +41,124 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   int _audioFrameDuration = AudioParams.frameDuration60;
 
-  final int _paginatedLimit = 20;
+  final int _messageListPaginatedLimit = 20;
 
-  int _paginatedOffset = 0;
+  int _messageListPaginatedOffset = 0;
 
-  bool _onCall = false;
+  bool _isOnCall = false;
 
   @override
   Future<void> close() {
-    if (null != _streamSubscription) {
-      _streamSubscription!.cancel();
-      _streamSubscription = null;
+    if (null != _websocketStreamSubscription) {
+      _websocketStreamSubscription!.cancel();
+      _websocketStreamSubscription = null;
     }
-    if (null != _audioSubscription) {
-      _audioSubscription!.cancel();
-      _audioSubscription = null;
+    if (null != _audioRecorderSubscription) {
+      _audioRecorderSubscription!.cancel();
+      _audioRecorderSubscription = null;
     }
     return super.close();
+  }
+
+  void _initWebsocketListener() {
+    _websocketStreamSubscription = _websocketChannel!.stream.listen(
+      (data) async {
+        try {
+          if (data is String) {
+            final WebsocketMessage message = WebsocketMessage.fromJson(
+              jsonDecode(data),
+            );
+
+            if (null != message.sessionId) {
+              _sessionId = message.sessionId;
+            }
+            if (null != message.audioParams) {
+              _audioSampleRate = message.audioParams!.sampleRate;
+              _audioChannels = message.audioParams!.channels;
+              _audioFrameDuration = message.audioParams!.frameDuration;
+            }
+
+            if (message.type == WebsocketMessage.typeSpeechToText) {
+              if (null != _audioRecorder &&
+                  await _audioRecorder!.isRecording()) {
+                await _audioRecorder!.stop();
+              }
+
+              if (null != message.text) {
+                add(
+                  ChatOnMessageEvent(
+                    message: StorageMessage(
+                      id: Uuid().v4(),
+                      text: message.text!,
+                      sendByMe: true,
+                      createdAt: DateTime.now(),
+                    ),
+                  ),
+                );
+              }
+            } else if (message.type == WebsocketMessage.typeTextToSpeech &&
+                message.state == WebsocketMessage.stateSentenceStart &&
+                null != message.text) {
+              add(
+                ChatOnMessageEvent(
+                  message: StorageMessage(
+                    id: Uuid().v4(),
+                    text: message.text!,
+                    sendByMe: false,
+                    createdAt: DateTime.now(),
+                  ),
+                ),
+              );
+            } else if (message.type == WebsocketMessage.typeTextToSpeech &&
+                message.state == WebsocketMessage.stateStop &&
+                _isOnCall) {
+              add(ChatStartListenEvent());
+            }
+          } else if (data is Uint8List) {
+            if (false == _audioPlayer!.isOpen()) {
+              await _audioPlayer!.openPlayer();
+            }
+
+            if (_audioPlayer!.isPlaying) {
+              _audioPlayer!.uint8ListSink!.add(
+                (await CommonUtils.opusToPcm(
+                  opusData: data,
+                  sampleRate: _audioSampleRate,
+                  channels: _audioChannels,
+                ))!,
+              );
+            } else {
+              await _audioPlayer!.startPlayerFromStream(
+                codec: Codec.pcm16,
+                interleaved: false,
+                numChannels: _audioChannels,
+                sampleRate: _audioSampleRate,
+                bufferSize: 1024,
+              );
+            }
+          }
+        } catch (e, s) {
+          print('___ERROR Listen $s $e');
+        }
+      },
+      onError: (e) {
+        print('___ERROR Websocket $e');
+      },
+      onDone: () {
+        print('___INFO Websocket Closed');
+        if (null != _websocketStreamSubscription) {
+          _websocketStreamSubscription!.cancel();
+          _websocketStreamSubscription = null;
+        }
+      },
+    );
   }
 
   ChatBloc() : super(ChatInitialState()) {
     on<ChatEvent>((event, emit) async {
       if (event is ChatInitialEvent) {
         try {
-          _channel = IOWebSocketChannel.connect(
+          _websocketChannel = IOWebSocketChannel.connect(
             Uri.parse('wss://2662r3426b.vicp.fun/xiaozhi/v1/'),
             headers: {
               "Protocol-Version": "1",
@@ -75,97 +169,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             },
           );
 
-          _streamSubscription = _channel!.stream.listen(
-            (data) async {
-              try {
-                if (data is String) {
-                  final WebsocketMessage message = WebsocketMessage.fromJson(
-                    jsonDecode(data),
-                  );
+          _initWebsocketListener();
 
-                  if (null != message.sessionId) {
-                    _sessionId = message.sessionId;
-                  }
-                  if (null != message.audioParams) {
-                    _audioSampleRate = message.audioParams!.sampleRate;
-                    _audioChannels = message.audioParams!.channels;
-                    _audioFrameDuration = message.audioParams!.frameDuration;
-                  }
-
-                  if (message.type == WebsocketMessage.typeSpeechToText) {
-                    if (null != _audioRecorder &&
-                        await _audioRecorder!.isRecording()) {
-                      await _audioRecorder!.stop();
-                    }
-
-                    if (null != message.text) {
-                      add(
-                        ChatOnMessageEvent(
-                          message: StorageMessage(
-                            id: Uuid().v4(),
-                            text: message.text!,
-                            sendByMe: true,
-                            createdAt: DateTime.now(),
-                          ),
-                        ),
-                      );
-                    }
-                  } else if (message.type ==
-                          WebsocketMessage.typeTextToSpeech &&
-                      message.state == WebsocketMessage.stateSentenceStart &&
-                      null != message.text) {
-                    add(
-                      ChatOnMessageEvent(
-                        message: StorageMessage(
-                          id: Uuid().v4(),
-                          text: message.text!,
-                          sendByMe: false,
-                          createdAt: DateTime.now(),
-                        ),
-                      ),
-                    );
-                  } else if (message.type ==
-                          WebsocketMessage.typeTextToSpeech &&
-                      message.state == WebsocketMessage.stateStop &&
-                      _onCall) {
-                    add(ChatStartListenEvent());
-                  }
-                } else if (data is Uint8List) {
-                  if (false == _audioPlayer!.isOpen()) {
-                    await _audioPlayer!.openPlayer();
-                  }
-
-                  if (_audioPlayer!.isPlaying) {
-                    _audioPlayer!.uint8ListSink!.add(
-                      (await CommonUtils.opusToPcm(
-                        opusData: data,
-                        sampleRate: _audioSampleRate,
-                        channels: _audioChannels,
-                      ))!,
-                    );
-                  } else {
-                    await _audioPlayer!.startPlayerFromStream(
-                      codec: Codec.pcm16,
-                      interleaved: false,
-                      numChannels: _audioChannels,
-                      sampleRate: _audioSampleRate,
-                      bufferSize: 1024,
-                    );
-                  }
-                }
-              } catch (e, s) {
-                print('___ERROR Listen $s $e');
-              }
-            },
-            onError: (e) {
-              print('___ERROR Websocket $e');
-            },
-            onDone: () {
-              print('___INFO Websocket Closed');
-            },
-          );
-
-          _channel!.sink.add(
+          _websocketChannel!.sink.add(
             jsonEncode(
               WebsocketMessage(
                 type: WebsocketMessage.typeHello,
@@ -188,8 +194,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
           List<StorageMessage> messageList = await StorageUtil()
               .getPaginatedMessages(
-                limit: _paginatedLimit,
-                offset: _paginatedOffset,
+                limit: _messageListPaginatedLimit,
+                offset: _messageListPaginatedOffset,
               );
 
           emit(ChatInitialState(messageList: messageList));
@@ -207,7 +213,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           return;
         }
 
-        _channel!.sink.add(
+        if (null == _websocketStreamSubscription) {
+          _initWebsocketListener();
+        }
+
+        _websocketChannel!.sink.add(
           jsonEncode(
             WebsocketMessage(
               type: WebsocketMessage.typeListen,
@@ -218,7 +228,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           ),
         );
 
-        _audioStream = (await _audioRecorder!.startStream(
+        _audioRecorderStream = (await _audioRecorder!.startStream(
           RecordConfig(
             encoder: AudioEncoder.pcm16bits,
             echoCancel: true,
@@ -228,20 +238,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           ),
         ));
 
-        if (null != _audioSubscription) {
-          _audioSubscription!.cancel();
-          _audioSubscription = null;
+        if (null != _audioRecorderSubscription) {
+          _audioRecorderSubscription!.cancel();
+          _audioRecorderSubscription = null;
         }
 
-        _audioSubscription = _audioStream!.listen((data) async {
-          if (_channel != null && data.isNotEmpty && data.length % 2 == 0) {
+        _audioRecorderSubscription = _audioRecorderStream!.listen((data) async {
+          if (_websocketChannel != null &&
+              data.isNotEmpty &&
+              data.length % 2 == 0) {
             Uint8List? opusData = await CommonUtils.pcmToOpus(
               pcmData: data,
               sampleRate: _audioSampleRate,
               frameDuration: _audioFrameDuration,
             );
             if (null != opusData) {
-              _channel!.sink.add(opusData);
+              _websocketChannel!.sink.add(opusData);
             }
           }
         });
@@ -255,13 +267,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
 
       if (event is ChatLoadMoreEvent) {
-        _paginatedOffset += _paginatedLimit;
+        _messageListPaginatedOffset += _messageListPaginatedLimit;
         List<StorageMessage> messageList = await StorageUtil()
-            .getPaginatedMessages(limit: 20, offset: _paginatedOffset);
+            .getPaginatedMessages(
+              limit: 20,
+              offset: _messageListPaginatedOffset,
+            );
         emit(
           ChatInitialState(
             messageList: [...state.messageList, ...messageList],
-            hasMore: messageList.length == _paginatedLimit,
+            hasMore: messageList.length == _messageListPaginatedLimit,
           ),
         );
       }
@@ -273,12 +288,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
 
       if (event is ChatStartCallEvent) {
-        _onCall = true;
+        _isOnCall = true;
         add(ChatStartListenEvent());
       }
 
       if (event is ChatStopCallEvent) {
-        _onCall = false;
+        _isOnCall = false;
         add(ChatStopListenEvent());
       }
     });

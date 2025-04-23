@@ -15,5 +15,11 @@
   "swipeInToResume": "上滑恢复",
   "call": "通话",
   "deviceActivation": "设备激活",
-  "deviceActivationDescription": "请使用激活码激活设备，自部署或无需验证请忽略本请求。"
+  "deviceActivationDescription": "请使用激活码激活设备，自部署或无需验证请忽略本请求。",
+  "otaUrl": "OTA地址",
+  "websocketUrl": "Websocket地址",
+  "macAddress": "MAC地址",
+  "macAddressEditTips": "如果修改了MAC地址，你需要重新激活设备！",
+  "saveSuccess": "保存成功",
+    "saveFailed": "保存失败"
 }

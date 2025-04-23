@@ -42,6 +42,7 @@ void main() async {
       child: MaterialApp(
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF002FA7)),
+          useMaterial3: true,
         ),
         localizationsDelegates: [
           AppLocalizations.delegate,

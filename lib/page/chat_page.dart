@@ -217,7 +217,7 @@ class _ChatPageState extends State<ChatPage> {
                         MaterialPageRoute(builder: (context) => SettingPage()),
                       );
                     },
-                    icon: Icon(Icons.menu_rounded),
+                    icon: Icon(Icons.settings_rounded),
                   ),
                 ],
               ),

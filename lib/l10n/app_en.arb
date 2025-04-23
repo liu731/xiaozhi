@@ -15,5 +15,11 @@
   "swipeInToResume": "Swipe in to resume",
   "call": "Call",
   "deviceActivation": "Device Activation",
-  "deviceActivationDescription": "Please use the activation code to activate the device. If you are self-deploying or do not need verification, please ignore this request."
+  "deviceActivationDescription": "Please use the activation code to activate the device. If you are self-deploying or do not need verification, please ignore this request.",
+  "otaUrl": "OTA URL",
+  "websocketUrl": "Websocket URL",
+  "macAddress": "MAC Address",
+  "macAddressEditTips": "If you changed the MAC address, you need to reactivate the device!",
+  "saveSuccess": "Save success",
+  "saveFailed": "Save failed"
 }

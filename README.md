@@ -6,6 +6,8 @@
 ✅按键对话
 <br/>
 ✅连续通话
+<br/>
+✅手动激活（自动获取验证码）
 *** 
 ### 💾参考项目
 [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32)

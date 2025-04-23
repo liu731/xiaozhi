@@ -2,6 +2,8 @@
 ***
 ### 📋功能进度
 ✅按键通话
+<br/>
+⚠️连续对话（开发中）
 *** 
 ### 💾参考项目
 [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32)

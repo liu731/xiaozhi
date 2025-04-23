@@ -12,9 +12,11 @@ import 'package:taudio/public/fs/flutter_sound.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:xiaozhi/common/x_const.dart';
 import 'package:xiaozhi/model/storage_message.dart';
 import 'package:xiaozhi/model/websocket_message.dart';
 import 'package:xiaozhi/util/common_utils.dart';
+import 'package:xiaozhi/util/shared_preferences_util.dart';
 import 'package:xiaozhi/util/storage_util.dart';
 
 part 'chat_event.dart';
@@ -159,13 +161,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       if (event is ChatInitialEvent) {
         try {
           _websocketChannel = IOWebSocketChannel.connect(
-            Uri.parse('wss://2662r3426b.vicp.fun/xiaozhi/v1/'),
+            Uri.parse(
+              (await SharedPreferencesUtil().getWebsocketUrl()) ??
+                  XConst.defaultWebsocketUrl,
+            ),
             headers: {
               "Protocol-Version": "1",
-              "Device-Id": "94:a9:90:1b:66:f4",
-              "Authorization":
-                  "Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjE4MDM4NywidXNlcm5hbWUiOiIrODYxNTg5Nzc0MTk5MiIsInRlbGVwaG9uZSI6Iis4NjE1OCoqKioxOTkyIiwiaWF0IjoxNzQxNTY5MzkzLCJleHAiOjE3NDkzNDUzOTN9.-7vgSLOmepxPaleSYoSNGtlVcLXkh7WuE9GNKnbkIpG9jCM3jZtbxt34aZX-0WBMm6AbpOiEJbRgOvbHkJZGbw",
-              "Client-Id": "acba69bf-4b23-4423-9aef-8112cf958f6b",
+              "Device-Id": await SharedPreferencesUtil().getMacAddress(),
+              "Client-Id": await SharedPreferencesUtil().getClientId(),
             },
           );
 

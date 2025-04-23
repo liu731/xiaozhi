@@ -116,7 +116,8 @@ class _ChatPageState extends State<ChatPage> {
             _refreshController.loadNoData();
           }
 
-          if (chatState.messageList.first.sendByMe) {
+          if (chatState.messageList.isNotEmpty &&
+              chatState.messageList.first.sendByMe) {
             clearUp();
           }
         }

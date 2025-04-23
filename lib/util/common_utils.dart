@@ -8,13 +8,11 @@ class CommonUtils {
 
   static SimpleOpusDecoder? _simpleOpusDecoder;
 
-  static String generateRandomMacAddress() {
-    final random = Random();
-    final bytes = List<int>.generate(6, (_) => random.nextInt(256));
-    return bytes
-        .map((b) => b.toRadixString(16).padLeft(2, '0'))
-        .join(':')
-        .toUpperCase();
+  static String generateUnicastMacAddress() {
+    final rand = Random();
+    List<int> macBytes = List.generate(6, (_) => rand.nextInt(256));
+    macBytes[0] = (macBytes[0] & 0xFE) | 0x02;
+    return macBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(':');
   }
 
   static Future<Uint8List?> pcmToOpus({

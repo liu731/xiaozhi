@@ -1,4 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import 'package:xiaozhi/common/x_const.dart';
+import 'package:xiaozhi/util/common_utils.dart';
 
 class SharedPreferencesUtil {
   static final SharedPreferencesUtil _instance =
@@ -11,9 +14,34 @@ class SharedPreferencesUtil {
   SharedPreferencesUtil._internal();
 
   final String _keyOtaUrl = 'OTA_URL';
+
   final String _keyWebsocketUrl = 'WEBSOCKET_URL';
+
   final String _keyMacAddress = 'MAC_ADDRESS';
+
   final String _keyClientId = 'CLIENT_ID';
+
+  Future<void> init() async {
+    String? otaUrl = await getOtaUrl();
+    if (null == otaUrl) {
+      await setOtaUrl(XConst.defaultOtaUrl);
+    }
+
+    String? websocketUrl = await getWebsocketUrl();
+    if (null == websocketUrl) {
+      await setWebsocketUrl(XConst.defaultWebsocketUrl);
+    }
+
+    String? macAddress = await getMacAddress();
+    if (null == macAddress) {
+      await setMacAddress(CommonUtils.generateUnicastMacAddress());
+    }
+
+    String? clientId = await getClientId();
+    if (null == clientId) {
+      await setClientId(Uuid().v4());
+    }
+  }
 
   Future<String?> getOtaUrl() async {
     return (await SharedPreferences.getInstance()).getString(_keyOtaUrl);

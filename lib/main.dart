@@ -6,6 +6,7 @@ import 'package:xiaozhi/bloc/chat/chat_bloc.dart';
 import 'package:xiaozhi/bloc/ota/ota_bloc.dart';
 import 'package:xiaozhi/l10n/generated/app_localizations.dart';
 import 'package:xiaozhi/page/chat_page.dart';
+import 'package:xiaozhi/util/shared_preferences_util.dart';
 import 'package:xiaozhi/util/storage_util.dart';
 
 void main() async {
@@ -26,6 +27,7 @@ void main() async {
     overlays: [SystemUiOverlay.top],
   );
 
+  await SharedPreferencesUtil().init();
   await StorageUtil().init();
 
   runApp(

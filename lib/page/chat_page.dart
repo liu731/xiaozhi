@@ -6,6 +6,7 @@ import 'package:xiaozhi/common/x_const.dart';
 import 'package:xiaozhi/l10n/generated/app_localizations.dart';
 import 'package:xiaozhi/widget/hold_to_talk_widget.dart';
 
+import 'call_page.dart';
 import 'setting_page.dart';
 
 class ChatPage extends StatefulWidget {
@@ -136,6 +137,16 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ],
             ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (context) => CallPage()));
+                },
+                icon: Icon(Icons.call_rounded),
+              ),
+            ],
           ),
           body: Stack(
             children: [

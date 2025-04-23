@@ -12,5 +12,6 @@
   "saySomething": "说点什么吧",
   "voiceRecognition": "语音识别",
   "swipeUpToCancel": "上滑取消",
-  "swipeInToResume": "上滑恢复"
+  "swipeInToResume": "上滑恢复",
+  "call": "通话"
 }

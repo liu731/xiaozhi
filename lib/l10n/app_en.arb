@@ -12,5 +12,6 @@
   "saySomething": "Say something",
   "voiceRecognition": "Voice Recognition",
   "swipeUpToCancel": "Swipe up to cancel",
-  "swipeInToResume": "Swipe in to resume"
+  "swipeInToResume": "Swipe in to resume",
+  "call": "Call"
 }

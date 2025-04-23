@@ -1,9 +1,9 @@
 # Xiaozhi/小智 Flutter客户端
 ***
 ### 📋功能进度
-✅按键通话
+✅按键对话
 <br/>
-⚠️连续对话（开发中）
+✅连续通话
 *** 
 ### 💾参考项目
 [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32)

@@ -20,3 +20,7 @@ class ChatOnMessageEvent extends ChatEvent {
 class ChatLoadMoreEvent extends ChatEvent {}
 
 class ChatStopListenEvent extends ChatEvent {}
+
+class ChatStartCallEvent extends ChatEvent {}
+
+class ChatStopCallEvent extends ChatEvent {}

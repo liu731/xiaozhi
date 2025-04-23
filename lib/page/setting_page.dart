@@ -12,10 +12,7 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.setting),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.setting)),
       body: Container(),
     );
   }

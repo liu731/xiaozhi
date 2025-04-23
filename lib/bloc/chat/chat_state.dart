@@ -10,7 +10,10 @@ sealed class ChatState {
 final class ChatInitialState extends ChatState {
   final bool hasMore;
 
-  const ChatInitialState({this.hasMore = true, super.messageList});
+  const ChatInitialState({
+    this.hasMore = true,
+    super.messageList,
+  });
 }
 
 final class ChatNoMicrophonePermissionState extends ChatState {

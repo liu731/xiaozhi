@@ -35,15 +35,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   String? _sessionId;
 
-  int? _audioSampleRate;
+  int _audioSampleRate = AudioParams.sampleRate16000;
 
-  int? _audioChannels;
+  int _audioChannels = AudioParams.channels1;
 
-  int? _audioFrameDuration;
+  int _audioFrameDuration = AudioParams.frameDuration60;
 
   final int _paginatedLimit = 20;
 
   int _paginatedOffset = 0;
+
+  bool _onCall = false;
 
   @override
   Future<void> close() {
@@ -80,6 +82,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                   final WebsocketMessage message = WebsocketMessage.fromJson(
                     jsonDecode(data),
                   );
+
                   if (null != message.sessionId) {
                     _sessionId = message.sessionId;
                   }
@@ -89,9 +92,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     _audioFrameDuration = message.audioParams!.frameDuration;
                   }
 
-                  if (message.type == WebsocketMessage.typeSpeechToText &&
-                      null != _audioRecorder) {
-                    await _audioRecorder!.stop();
+                  if (message.type == WebsocketMessage.typeSpeechToText) {
+                    if (null != _audioRecorder &&
+                        await _audioRecorder!.isRecording()) {
+                      await _audioRecorder!.stop();
+                    }
 
                     if (null != message.text) {
                       add(
@@ -119,6 +124,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                         ),
                       ),
                     );
+                  } else if (message.type ==
+                          WebsocketMessage.typeTextToSpeech &&
+                      message.state == WebsocketMessage.stateStop &&
+                      _onCall) {
+                    add(ChatStartListenEvent());
                   }
                 } else if (data is Uint8List) {
                   if (false == _audioPlayer!.isOpen()) {
@@ -129,33 +139,29 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                     _audioPlayer!.uint8ListSink!.add(
                       (await CommonUtils.opusToPcm(
                         opusData: data,
-                        sampleRate: _audioSampleRate!,
-                        channels: _audioChannels!,
+                        sampleRate: _audioSampleRate,
+                        channels: _audioChannels,
                       ))!,
                     );
                   } else {
                     await _audioPlayer!.startPlayerFromStream(
                       codec: Codec.pcm16,
                       interleaved: false,
-                      numChannels: _audioChannels!,
-                      sampleRate: _audioSampleRate!,
+                      numChannels: _audioChannels,
+                      sampleRate: _audioSampleRate,
                       bufferSize: 1024,
                     );
                   }
                 }
               } catch (e, s) {
-                print('___Error');
-                print(e);
-                print(s);
+                print('___ERROR Listen $s $e');
               }
             },
-            onError: (error) {
-              // Handle errors
-              print('WebSocket error: $error');
+            onError: (e) {
+              print('___ERROR Websocket $e');
             },
             onDone: () {
-              // Handle WebSocket closure
-              print('WebSocket closed');
+              print('___INFO Websocket Closed');
             },
           );
 
@@ -165,10 +171,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
                 type: WebsocketMessage.typeHello,
                 transport: WebsocketMessage.transportWebSocket,
                 audioParams: AudioParams(
-                  sampleRate: _audioSampleRate ?? AudioParams.sampleRate16000,
-                  channels: _audioChannels ?? AudioParams.channels1,
-                  frameDuration:
-                      _audioFrameDuration ?? AudioParams.frameDuration60,
+                  sampleRate: _audioSampleRate,
+                  channels: _audioChannels,
+                  frameDuration: _audioFrameDuration,
                   format: AudioParams.formatOpus,
                 ),
               ).toJson(),
@@ -189,8 +194,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
           emit(ChatInitialState(messageList: messageList));
         } catch (e, s) {
-          print(e);
-          print(s);
+          print('___ERROR ChatInitialEvent $e $s');
         }
       }
 
@@ -219,17 +223,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             encoder: AudioEncoder.pcm16bits,
             echoCancel: true,
             noiseSuppress: true,
-            numChannels: _audioChannels!,
-            sampleRate: _audioSampleRate!,
+            numChannels: _audioChannels,
+            sampleRate: _audioSampleRate,
           ),
         ));
+
+        if (null != _audioSubscription) {
+          _audioSubscription!.cancel();
+          _audioSubscription = null;
+        }
 
         _audioSubscription = _audioStream!.listen((data) async {
           if (_channel != null && data.isNotEmpty && data.length % 2 == 0) {
             Uint8List? opusData = await CommonUtils.pcmToOpus(
               pcmData: data,
-              sampleRate: _audioSampleRate!,
-              frameDuration: _audioFrameDuration!,
+              sampleRate: _audioSampleRate,
+              frameDuration: _audioFrameDuration,
             );
             if (null != opusData) {
               _channel!.sink.add(opusData);
@@ -261,6 +270,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         if (null != _audioRecorder && (await _audioRecorder!.isRecording())) {
           await _audioRecorder!.stop();
         }
+      }
+
+      if (event is ChatStartCallEvent) {
+        _onCall = true;
+        add(ChatStartListenEvent());
+      }
+
+      if (event is ChatStopCallEvent) {
+        _onCall = false;
+        add(ChatStopListenEvent());
       }
     });
   }

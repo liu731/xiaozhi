@@ -4,7 +4,7 @@
 Xiaozhi/小智Websocket协议客户端，基于Flutter开发，支持Android和iOS平台
 ***
 ### 📱应用截图
-|   ![截图_1](docs/image/Screenshot_1.png)   | ![截图_1](docs/image/Screenshot_2.png) | ![截图_1](docs/image/Screenshot_3.png) | ![截图_1](docs/image/Screenshot_4.png) |
+|   ![截图_1](docs/image/Screenshot_1.png)   | ![截图_2](docs/image/Screenshot_2.png) | ![截图_3](docs/image/Screenshot_3.png) | ![截图_4](docs/image/Screenshot_4.png) |
 |  ----  |--------------------------------------|--------------------------------------|--------------------------------------|
 ***
 ### 📲系统要求

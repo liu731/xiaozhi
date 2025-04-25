@@ -9,7 +9,7 @@ Xiaozhi/小智Websocket协议客户端，基于Flutter开发，支持Android和i
 ***
 ### 📲系统要求
 - Android 11+ (API 30)
-- iOS (⚠️暂未测试)
+- iOS 13+
 ***
 ### ⚡️运行流程
 1. 打开APP复制激活码，在对应后台注册账号激活
@@ -47,6 +47,8 @@ Xiaozhi/小智Websocket协议客户端，基于Flutter开发，支持Android和i
 ✅手动激活（自动获取验证码）
 <br/>
 ✅自定义OTA地址、Websocket地址、MAC地址
+<br/>
+✅历史消息
 *** 
 ### 💾参考项目
 [78/xiaozhi-esp32](https://github.com/78/xiaozhi-esp32)

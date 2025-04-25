@@ -115,6 +115,7 @@ class _ChatPageState extends State<ChatPage> {
                         },
                         child: Text(AppLocalizations.of(context)!.reject),
                       ),
+                      SizedBox(width: XConst.spacer),
                       FilledButton(
                         onPressed: () async {
                           Navigator.pop(context);
@@ -173,6 +174,7 @@ class _ChatPageState extends State<ChatPage> {
                           },
                           child: Text(AppLocalizations.of(context)!.reject),
                         ),
+                        SizedBox(width: XConst.spacer),
                         FilledButton(
                           onPressed: () async {
                             Navigator.pop(context);

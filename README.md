@@ -1,5 +1,6 @@
 # Xiaozhi/小智 Flutter客户端
-![app_icon](assets/icon.png)
+<img src="assets/icon.png" alt="app_icon" width="128">
+
 ***
 ### 🐣项目简介
 Xiaozhi/小智Websocket协议客户端，基于Flutter开发，支持Android和iOS平台
